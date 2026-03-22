@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo - Cửa Hàng 24h</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="store-header">
+                <div class="store-icon">🏪</div>
+                <h1>Cửa Hàng 24h</h1>
+                <p>123 Đường ABC</p>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="icon">📊</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a href="products.html" class="menu-item">
+                    <span class="icon">📦</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <div class="menu-item-group">
+                    <a href="warehouse.html" class="menu-item">
+                        <span class="icon">📋</span>
+                        <span>Tồn kho</span>
+                    </a>
+                    <a href="add-product.html" class="menu-subitem">
+                        <span class="icon">➕</span>
+                        <span>Thêm Sản Phẩm</span>
+                    </a>
+                </div>
+                <a href="reports.html" class="menu-item active">
+                    <span class="icon">📈</span>
+                    <span>Báo cáo</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Báo cáo thống kê</h2>
+                <p>Phân tích dữ liệu của hàng</p>
+            </div>
+
+            <div class="sections-grid">
+                <div class="section">
+                    <h3>Phân bổ theo danh mục</h3>
+                    <div id="category-chart" class="chart">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Top sản phẩm (theo số lượng)</h3>
+                    <div id="top-products" class="top-list">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Tổng hợp theo nhà cung cấp</h3>
+                <div class="companies-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tên công ty</th>
+                                <th>Số sản phẩm</th>
+                                <th>Giá trị</th>
+                            </tr>
+                        </thead>
+                        <tbody id="companies-tbody">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        async function loadReports() {
+            try {
+                // Load categories
+                const catRes = await fetch('/api/reports/categories');
+                const catData = await catRes.json();
+                
+                const categoryChart = document.getElementById('category-chart');
+                catData.categories.forEach(cat => {
+                    const item = document.createElement('div');
+                    item.className = 'chart-item';
+                    const barWidth = (cat.count / Math.max(...catData.categories.map(c => c.count))) * 100;
+                    item.innerHTML = `
+                        <div class="chart-label">${cat.name}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar" style="width: ${barWidth}%"></div>
+                            <span class="chart-value">${cat.count}</span>
+                        </div>
+                    `;
+                    categoryChart.appendChild(item);
+                });
+
+                // Load top products
+                const topRes = await fetch('/api/reports/top-products');
+                const topData = await topRes.json();
+
+                const topProducts = document.getElementById('top-products');
+                topData.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'top-item';
+                    item.innerHTML = `
+                        <span class="rank">${p.rank}</span>
+                        <span class="name">${p.name}</span>
+                        <span class="count">${p.stock}</span>
+                    `;
+                    topProducts.appendChild(item);
+                });
+
+                // Load companies
+                const compRes = await fetch('/api/reports/companies');
+                const companies = await compRes.json();
+
+                const tbody = document.getElementById('companies-tbody');
+                companies.forEach(c => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${c.name}</td>
+                        <td>${c.products}</td>
+                        <td>${c.value.toLocaleString('vi-VN')}đ</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

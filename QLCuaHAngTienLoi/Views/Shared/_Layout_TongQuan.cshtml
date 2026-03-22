@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="~/css/styles.css">
+    <title>@ViewBag.Title</title>
+</head>
+<body>
+    <div>
+
+        <script src="~/app.js"></script>
+        <script>
+            // Load dashboard data
+            async function loadDashboard() {
+                try {
+                    const dashRes = await fetch('/api/dashboard');
+                    const dash = await dashRes.json();
+
+                    document.getElementById('total-products').textContent = dash.total_products;
+                    document.getElementById('total-revenue').textContent = dash.total_revenue.toLocaleString('vi-VN') + 'đ';
+                    document.getElementById('total-alerts').textContent = dash.total_alerts;
+                    document.getElementById('total-favorites').textContent = dash.total_favorites;
+                    document.getElementById('date-text').textContent = `Cập nhật ngày ${dash.date}`;
+
+                    // Load recent products
+                    const prodRes = await fetch('/api/products');
+                    const products = await prodRes.json();
+
+                    const recentProducts = document.getElementById('recent-products');
+                    products.slice(0, 3).forEach(p => {
+                        const item = document.createElement('div');
+                        item.className = 'product-item';
+                        item.innerHTML = `
+                            <div class="product-avatar">${p.name[0].toUpperCase()}</div>
+                            <div class="product-details">
+                                <p class="product-name">${p.name}</p>
+                                <p class="product-category">${p.category}</p>
+                            </div>
+                            <div class="product-price">${p.price.toLocaleString('vi-VN')}đ</div>
+                        `;
+                        recentProducts.appendChild(item);
+                    });
+
+                    // Load companies
+                    const compRes = await fetch('/api/reports/companies');
+                    const companies = await compRes.json();
+
+                    const companiesList = document.getElementById('companies-list');
+                    companies.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = 'company-card';
+                        card.innerHTML = `
+                            <h4>${c.name}</h4>
+                            <p>Sản phẩm: <strong>${c.products}</strong></p>
+                            <p>Giá trị: <strong>${c.value.toLocaleString('vi-VN')}đ</strong></p>
+                        `;
+                        companiesList.appendChild(card);
+                    });
+
+                    // Low stock alert
+                    const lowStockProducts = products.filter(p => p.stock < 10);
+                    const alertDiv = document.getElementById('low-stock-alert');
+                    if (lowStockProducts.length > 0) {
+                        alertDiv.innerHTML = '';
+                        lowStockProducts.forEach(p => {
+                            const alert = document.createElement('div');
+                            alert.className = 'alert-item';
+                            alert.innerHTML = `
+                                <span>${p.name}</span>
+                                <span class="stock-badge">${p.stock} cái</span>
+                            `;
+                            alertDiv.appendChild(alert);
+                        });
+                    }
+
+                } catch (error) {
+                    console.error('Error loading dashboard:', error);
+                }
+            }
+
+            loadDashboard();
+        </script>
+        @RenderBody()
+      
+    </div>
+ 
+</body>
+</html>

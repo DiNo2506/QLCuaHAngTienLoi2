@@ -1,0 +1,229 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tồn Kho - Cửa Hàng 24h</title>
+    <link rel="stylesheet" href="~/css/styles.css">
+</head>
+<body>
+   
+    <div class="container">
+        
+        @await Html.PartialAsync("_Sidebar")
+
+        <main class="main-content">
+            <div class="content-header">
+                <div>
+                <h2>Quản lý tồn kho</h2>
+                    <p>Theo dõi sản phẩm trong kho</p>
+                </div>
+                <div><button class="btn-primary">+ Thêm Sản Phẩm</button></div>
+            </div>
+
+            <div class="warehouse-stats">
+                <div class="stat-card">
+                    <span class="stat-label">Tổng sản phẩm</span>
+                    <span class="stat-number" id="total-products-warehouse">0</span>
+                </div>
+                <div class="stat-card alert">
+                    <span class="stat-label">Cảnh báo tồn kho</span>
+                    <span class="stat-number" id="low-stock-count">0</span>
+                </div>
+            </div>
+
+            <div class="import-stock-section">
+                <div class="import-header">
+                    <h3>Nhập hàng</h3>
+                    <p>Cập nhật tồn kho sản phẩm</p>
+                </div>
+                <div class="import-form-container">
+                    <form id="import-form" onsubmit="handleImportStock(event)">
+                        <div class="form-group">
+                            <label for="product-select">Chọn sản phẩm</label>
+                            <select id="product-select" required>
+                                <option value="">-- Chọn sản phẩm --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="import-qty">Số lượng nhập</label>
+                            <input type="number" id="import-qty" min="1" placeholder="Nhập số lượng" required>
+                        </div>
+                        <div class="import-info" id="product-info">
+                            <p>Chọn sản phẩm để xem thông tin tồn kho hiện tại</p>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%;">Nhập hàng</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Sản phẩm sắp hết hàng (&lt; 10 cái)</h3>
+                <table class="warehouse-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Tồn kho</th>
+                            <th>Mức cảnh báo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="low-stock-tbody">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>Toàn bộ sản phẩm</h3>
+                <table class="warehouse-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Tồn kho hiện tại</th>
+                            <th>Giá bán</th>
+                            <th>Giá trị</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-products-tbody">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="~/js/app.js"></script>
+    <script>
+        let productsCache = [];
+
+        async function loadWarehouse() {
+            try {
+                const prodRes = await fetch('/api/products');
+                const products = await prodRes.json();
+                productsCache = products;
+
+                const warehouseRes = await fetch('/api/warehouse');
+                const warehouse = await warehouseRes.json();
+
+                // Update stats
+                document.getElementById('total-products-warehouse').textContent = warehouse.total_products;
+                document.getElementById('low-stock-count').textContent = warehouse.low_stock_alerts;
+
+                // Populate product select dropdown
+                const productSelect = document.getElementById('product-select');
+                productSelect.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
+                products.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = `${p.name} (Hiện tại: ${p.stock} cái)`;
+                    productSelect.appendChild(option);
+                });
+
+                // Low stock items
+                const lowStock = products.filter(p => p.stock < 10);
+                const lowStockTbody = document.getElementById('low-stock-tbody');
+
+                if (lowStock.length === 0) {
+                    lowStockTbody.innerHTML = '<tr><td colspan="3" class="empty">Không có sản phẩm sắp hết hàng</td></tr>';
+                } else {
+                    lowStock.forEach(p => {
+                        const row = document.createElement('tr');
+                        const statusClass = p.stock < 5 ? 'critical' : 'warning';
+                        row.innerHTML = `
+                            <td>${p.name}</td>
+                            <td><span class="stock-badge ${statusClass}">${p.stock}</span></td>
+                            <td>Cần nhập thêm hàng</td>
+                        `;
+                        lowStockTbody.appendChild(row);
+                    });
+                }
+
+                // All products
+                const allProductsTbody = document.getElementById('all-products-tbody');
+                products.forEach(p => {
+                    const row = document.createElement('tr');
+                    const value = p.stock * p.price;
+                    row.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.stock}</td>
+                        <td>${p.price.toLocaleString('vi-VN')}đ</td>
+                        <td>${value.toLocaleString('vi-VN')}đ</td>
+                    `;
+                    allProductsTbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading warehouse:', error);
+            }
+        }
+
+        document.getElementById('product-select').addEventListener('change', (e) => {
+            const productId = parseInt(e.target.value);
+            const infoDiv = document.getElementById('product-info');
+
+            if (productId) {
+                const product = productsCache.find(p => p.id === productId);
+                if (product) {
+                    const statusClass = product.stock < 10 ? 'warning' : 'normal';
+                    infoDiv.innerHTML = `
+                        <div class="info-content">
+                            <p><strong>${product.name}</strong></p>
+                            <p>Tồn kho hiện tại: <span class="stock-badge ${statusClass}">${product.stock} cái</span></p>
+                            <p>Giá bán: ${product.price.toLocaleString('vi-VN')}đ</p>
+                            <p>Công ty: ${product.company}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                infoDiv.innerHTML = '<p>Chọn sản phẩm để xem thông tin tồn kho hiện tại</p>';
+            }
+        });
+
+        async function handleImportStock(e) {
+            e.preventDefault();
+
+            const productId = parseInt(document.getElementById('product-select').value);
+            const quantity = parseInt(document.getElementById('import-qty').value);
+
+            if (!productId || !quantity) {
+                alert('Vui lòng chọn sản phẩm và nhập số lượng');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/warehouse/import-stock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, quantity: quantity })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showNotification(`Nhập hàng thành công! ${data.product_name}: ${data.old_stock} → ${data.new_stock} cái`);
+                    document.getElementById('import-form').reset();
+                    document.getElementById('product-info').innerHTML = '<p>Chọn sản phẩm để xem thông tin tồn kho hiện tại</p>';
+                    loadWarehouse();
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error importing stock:', error);
+                alert('Lỗi khi nhập hàng');
+            }
+        }
+
+        function showNotification(message) {
+            const notif = document.createElement('div');
+            notif.className = 'notification notification-success';
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        loadWarehouse();
+         @RenderBody();
+    </script>
+    
+</body>
+</html>

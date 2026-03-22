@@ -1,0 +1,19 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+<div class="container">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <main class="main-content">
+        <div class="content-header">
+            <h2>Tổng quan cửa hàng</h2>
+            <p id="date-text">Cập nhật ngày 6/3/2026</p>
+        </div>
+
+        @await Component.InvokeAsync("TongQuan")
+
+
+    </main>
+</div>

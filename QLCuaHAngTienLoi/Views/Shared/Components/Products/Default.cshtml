@@ -1,0 +1,317 @@
+﻿@model QLCuaHAngTienLoi.ViewModels.ProductListVM
+@using System.Globalization
+
+@functions {
+    private static string JsEscape(string? s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        return s.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
+    }
+}
+
+<div class="products-content">
+    <div class="products-table-wrapper">
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Mã sản phẩm</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Ngày nhập</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="products-tbody">
+                @if (Model?.Items == null || !Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="empty-state">Không có sản phẩm</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var p in Model.Items)
+                    {
+                        var badgeClass = "stock-badge";
+                        if (p.Stock == 0) badgeClass += " out";
+                        else if (p.Stock < 25) badgeClass += " critical";
+                        else if (p.Stock < 45) badgeClass += " warning";
+                        else badgeClass += " good";
+
+                        var jsId = JsEscape(p.MaSanPham);
+                        var jsName = JsEscape(p.TenSanPham);
+                        var priceInvariant = p.Price.ToString(CultureInfo.InvariantCulture);
+                        var created = p.NgayThem.HasValue ? p.NgayThem.Value.ToString("dd/MM/yyyy") : "";
+                        <tr>
+                            <td><strong>@p.TenSanPham</strong></td>
+                            <td><span class="company">@p.Company</span></td>
+                            <td>@p.Sku</td>
+                            <td>@p.Category</td>
+                            <td>@(p.Price.ToString("N0"))đ</td>
+                            <td><span class="@badgeClass">@p.Stock cái</span></td>
+                            <td>@created</td>
+                            <td>
+                                <button class="add-to-cart-btn"
+                                        onclick="addToCart('@jsId', '@jsName', @priceInvariant)"
+                                        @(p.Stock == 0 ? "disabled" : "")>
+                                    @(p.Stock == 0 ? "Hết hàng" : "Thêm")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @await Html.PartialAsync("_Cart")
+</div>
+
+@* Pagination controls *@
+@if (Model != null && Model.TotalPages > 1)
+{
+    var current = Model.Page;
+    var total = Model.TotalPages;
+    var pageSize = Model.PageSize;
+    var search = ViewContext.HttpContext.Request.Query["search"].ToString();
+    <nav class="pagination" aria-label="Page navigation">
+        <ul class="pagination-list">
+            <li class="@(current == 1 ? "disabled" : "")">
+                <a href="@Url.Action("Index", "Products", new { page = current - 1, pageSize = pageSize, search = search })">‹ Prev</a>
+            </li>
+
+            @* render up to 7 page links centered on current *@
+            @{
+                var start = Math.Max(1, current - 3);
+                var end = Math.Min(total, start + 6);
+                if (end - start < 6) start = Math.Max(1, end - 6);
+            }
+            @for (int i = start; i <= end; i++)
+            {
+                <li class="@(i == current ? "active" : "")">
+                    <a href="@Url.Action("Index", "Products", new { page = i, pageSize = pageSize, search = search })">@i</a>
+                </li>
+            }
+
+            <li class="@(current == total ? "disabled" : "")">
+                <a href="@Url.Action("Index", "Products", new { page = current + 1, pageSize = pageSize, search = search })">Next ›</a>
+            </li>
+        </ul>
+    </nav>
+}
+<style>
+
+    /* ===== Wrapper ===== */
+    .products-table-wrapper {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    /* ===== Table ===== */
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        .products-table thead {
+            background: #f8fafc;
+        }
+
+        .products-table th {
+            text-align: left;
+            padding: 14px 12px;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .products-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Hover row */
+        .products-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+            .products-table tbody tr:hover {
+                background: #f9fafb;
+                transform: scale(1.003);
+            }
+
+        /* ===== Text ===== */
+        .products-table td strong {
+            color: #0f172a;
+            font-size: 15px;
+        }
+
+    .company {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    /* ===== Badge tồn kho ===== */
+    .stock-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+        .stock-badge.good {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .stock-badge.warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .stock-badge.critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stock-badge.out {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+    /* ===== Button ===== */
+    .add-to-cart-btn {
+        padding: 7px 14px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(79,70,229,0.3);
+        }
+
+        .add-to-cart-btn:disabled {
+            background: #cbd5f5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+    /* ===== Empty ===== */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #94a3b8;
+        font-size: 15px;
+    }
+
+    /* ===== Pagination ===== */
+    .pagination {
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .pagination-list {
+        list-style: none;
+        display: inline-flex;
+        gap: 6px;
+        padding: 0;
+    }
+
+        .pagination-list li a {
+            display: block;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            text-decoration: none;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+
+            .pagination-list li a:hover {
+                background: #f1f5f9;
+            }
+
+        .pagination-list li.active a {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border: none;
+        }
+
+        .pagination-list li.disabled a {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+</style>
+<script>
+    (function () {
+        // addToCart integrates with the cart partial which stores cart in localStorage
+        // It uses helpers exposed by the _Cart partial if available: __cartLoad, __cartSave, __cartRender
+        window.addToCart = window.addToCart || function (id, name, price) {
+            // normalize values
+            const pid = String(id ?? '');
+            const pname = String(name ?? '');
+            const pprice = Number(price) || 0;
+
+            const loadCart = window.__cartLoad || function () {
+                try { return JSON.parse(localStorage.getItem('cart') || '[]'); } catch (e) { return []; }
+            };
+            const saveCart = window.__cartSave || function (c) {
+                try { localStorage.setItem('cart', JSON.stringify(c)); } catch (e) { console.warn(e); }
+            };
+            const renderCart = window.__cartRender || function () { };
+
+            const cart = loadCart() || [];
+            const idx = cart.findIndex(x => String(x.id) === pid);
+            if (idx >= 0) {
+                cart[idx].qty = (cart[idx].qty || 0) + 1;
+            } else {
+                cart.push({ id: pid, name: pname, price: pprice, qty: 1 });
+            }
+
+            saveCart(cart);
+            renderCart();
+
+            // simple feedback toast
+            showCartToast(`${pname} đã được thêm vào giỏ hàng`);
+        };
+
+        function showCartToast(message) {
+            const toastId = 'cart-toast';
+            let toast = document.getElementById(toastId);
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = toastId;
+                toast.style.position = 'fixed';
+                toast.style.right = '20px';
+                toast.style.bottom = '20px';
+                toast.style.background = 'rgba(0,0,0,0.85)';
+                toast.style.color = '#fff';
+                toast.style.padding = '10px 14px';
+                toast.style.borderRadius = '8px';
+                toast.style.zIndex = '9999';
+                toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            toast.style.transition = 'opacity 400ms ease';
+            setTimeout(function () {
+                toast.style.opacity = '0';
+            }, 1400);
+        }
+    })();
+</script>

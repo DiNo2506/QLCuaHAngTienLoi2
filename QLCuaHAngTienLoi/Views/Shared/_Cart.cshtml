@@ -1,0 +1,126 @@
+﻿@* Partial cart: render vị trí giỏ hàng và client-side logic to sync with localStorage *@
+<aside class="cart-sidebar">
+    <div class="cart-header">
+        <h3> Giỏ hàng</h3>
+        <span class="cart-count" id="cart-count">0</span>
+    </div>
+    <div class="cart-items" id="cart-items">
+        <div class="cart-empty">Giỏ hàng trống</div>
+    </div>
+    <div class="cart-summary">
+        <div class="summary-row">
+            <span>Số lượng:</span>
+            <span id="cart-qty">0</span>
+        </div>
+        <div class="summary-row">
+            <span>Tổng tiền:</span>
+            <span class="summary-total" id="cart-total">0đ</span>
+        </div>
+        <button class="checkout-btn" id="checkout-btn" disabled>Thanh toán</button>
+    </div>
+</aside>
+
+<script>
+(function(){
+    const CHECKOUT_PATH = '/HoaDon/Checkout'; // or '/Cart' if you have a cart page
+    function loadCart() {
+        try {
+            return JSON.parse(localStorage.getItem('cart') || '[]');
+        } catch (e) {
+            console.warn('Invalid cart in storage', e);
+            return [];
+        }
+    }
+    function saveCart(cart) {
+        try { localStorage.setItem('cart', JSON.stringify(cart)); } catch(e){ console.warn(e); }
+    }
+    function renderCart() {
+        const cart = loadCart();
+        const container = document.getElementById('cart-items');
+        const count = document.getElementById('cart-count');
+        const qty = document.getElementById('cart-qty');
+        const total = document.getElementById('cart-total');
+        const checkoutBtn = document.getElementById('checkout-btn');
+
+        if (!container) return;
+
+        if (!cart || cart.length === 0) {
+            container.innerHTML = '<div class="cart-empty">Giỏ hàng trống</div>';
+            count.textContent = '0';
+            qty.textContent = '0';
+            total.textContent = '0đ';
+            checkoutBtn.disabled = true;
+            return;
+        }
+
+        count.textContent = cart.length;
+        const totalQty = cart.reduce((s,i)=> s + (i.qty||0), 0);
+        const totalPrice = cart.reduce((s,i)=> s + ((i.price||0) * (i.qty||0)), 0);
+        qty.textContent = totalQty;
+        total.textContent = new Intl.NumberFormat('vi-VN').format(totalPrice) + 'đ';
+        checkoutBtn.disabled = false;
+
+        container.innerHTML = cart.map(item => {
+            const price = new Intl.NumberFormat('vi-VN').format(item.price || 0) + 'đ';
+            return `
+                <div class="cart-item" data-id="${item.id}">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">${price}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" data-action="dec">−</button>
+                        <span class="cart-qty">${item.qty}</span>
+                        <button class="qty-btn" data-action="inc">+</button>
+                        <button class="remove-btn" data-action="remove">Xóa</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // delegate events inside cart-items
+    document.addEventListener('click', function(e){
+        const el = e.target;
+        const itemEl = el.closest('.cart-item');
+        if (!itemEl) return;
+        const id = itemEl.getAttribute('data-id');
+        const action = el.getAttribute('data-action');
+        if (!action) return;
+
+        let cart = loadCart();
+        const idx = cart.findIndex(x => String(x.id) === String(id));
+        if (idx === -1) return;
+
+        if (action === 'inc') {
+            cart[idx].qty = (cart[idx].qty || 0) + 1;
+        } else if (action === 'dec') {
+            cart[idx].qty = (cart[idx].qty || 0) - 1;
+            if (cart[idx].qty <= 0) cart.splice(idx,1);
+        } else if (action === 'remove') {
+            cart.splice(idx,1);
+        }
+        saveCart(cart);
+        renderCart();
+    });
+
+    document.getElementById('checkout-btn')?.addEventListener('click', function(){
+        const cart = loadCart();
+        if (!cart || cart.length === 0) {
+            alert('Giỏ hàng trống!');
+            return;
+        }
+        // navigate to your checkout page
+        window.location.href = CHECKOUT_PATH;
+    });
+
+    // expose helpers globally if layout JS needs them
+    window.__cartLoad = loadCart;
+    window.__cartSave = saveCart;
+    window.__cartRender = renderCart;
+
+    // initial render
+    document.addEventListener('DOMContentLoaded', renderCart);
+    renderCart();
+})();
+</script>

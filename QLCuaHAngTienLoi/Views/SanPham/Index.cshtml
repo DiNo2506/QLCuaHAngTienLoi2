@@ -1,0 +1,152 @@
+﻿@{
+    ViewData["Title"] = "Index";
+    var search = Context.Request.Query["search"].ToString();
+    var sort = Context.Request.Query["sort"].ToString();
+    if (string.IsNullOrEmpty(sort)) sort = "all";
+
+    int page;
+    if (!int.TryParse(Context.Request.Query["page"], out page) || page <= 0)
+    {
+        page = 1;
+    }
+
+    int pageSize;
+    if (!int.TryParse(Context.Request.Query["pageSize"], out pageSize) || pageSize <= 0)
+    {
+        pageSize = 10;
+    }
+}
+@await Html.PartialAsync("_Sidebar")
+
+<main class="main-content">
+    <div class="content-header">
+        <div>
+            <h2>Mua sắm sản phẩm</h2>
+            <p>Chọn sản phẩm và thêm vào giỏ hàng để thanh toán</p>
+        </div>
+    </div>
+
+    <form method="get" class="search-section">
+
+        <div class="search-box">
+            <span class="icon">🔍</span>
+            <input type="text" name="search" value="@search" placeholder="Tìm sản phẩm..." />
+        </div>
+
+       @*  <div class="filters">
+            <select name="sort" onchange="this.form.submit()">
+                <option value="all" selected="@(sort == "all")">Tất cả</option>
+                <option value="price_asc" selected="@(sort == "price_asc")">Giá tăng</option>
+                <option value="price_desc" selected="@(sort == "price_desc")">Giá giảm</option>
+                <option value="stock_asc" selected="@(sort == "stock_asc")">Sắp hết hàng</option>
+                <option value="stock_desc" selected="@(sort == "stock_desc")">Còn nhiều</option>
+            </select>
+
+            <select name="pageSize" onchange="this.form.submit()">
+                <option value="10" selected="@(pageSize == 10)">10 / trang</option>
+                <option value="20" selected="@(pageSize == 20)">20 / trang</option>
+            </select>
+        </div> *@
+
+        <!-- giữ state -->
+        <input type="hidden" name="sort" value="@sort" />
+        <input type="hidden" name="search" value="@search" />
+        <input type="hidden" name="page" value="1" />
+
+        <button type="submit" class="btn-search">Tìm kiếm</button>
+    </form>
+    <style>
+       /* SEARCH SECTION */
+.search-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: linear-gradient(145deg, #ffffff, #f1f5f9);
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    margin: 25px 0;
+    border: 1px solid #e5e7eb;
+}
+
+/* SEARCH BOX */
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px 12px 40px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    font-size: 14px;
+    background: #f9fafb;
+    transition: all 0.25s ease;
+}
+
+.search-box input:focus {
+    border-color: #3b82f6;
+    background: white;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+}
+
+/* ICON */
+.search-box .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #9ca3af;
+}
+
+/* FILTERS */
+.filters {
+    display: flex;
+    gap: 12px;
+}
+
+.filters select {
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filters select:hover {
+    border-color: #3b82f6;
+    background: white;
+}
+
+/* BUTTON */
+.btn-search {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.btn-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+}
+
+
+    </style>
+
+    @* Invoke the component with pagination params *@
+    @await Component.InvokeAsync("Products", new { page = page, pageSize = pageSize, search = search, sort = sort })
+</main>
