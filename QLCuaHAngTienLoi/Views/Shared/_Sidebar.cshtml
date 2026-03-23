@@ -2,7 +2,7 @@
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
-    var isTonKho = currentController.Equals("TonKho", System.StringComparison.OrdinalIgnoreCase)
+    var isTonKho = currentController.Equals("KhoHang", System.StringComparison.OrdinalIgnoreCase)
                    || currentController.Equals("SanPhams", System.StringComparison.OrdinalIgnoreCase);
 }
 
@@ -157,13 +157,13 @@
 
             <div class="submenu">
 
-                <a asp-controller="TonKho" asp-action="Index"
-                   class="menu-subitem @(currentController == "TonKho" ? "active" : "")">
+                <a asp-controller="KhoHang" asp-action="Index"
+                   class="menu-subitem @(currentController == "KhoHang" ? "active" : "")">
                     📋 Danh sách kho
                 </a>
 
-                <a asp-controller="SanPhams" asp-action="Create"
-                   class="menu-subitem @(currentController == "SanPhams" && currentAction == "Create" ? "active" : "")">
+                <a asp-controller="ThemSP" asp-action="Index"
+                   class="menu-subitem @(currentController == "ThemSP" ? "active" : "")">
                     ➕ Thêm sản phẩm
                 </a>
 

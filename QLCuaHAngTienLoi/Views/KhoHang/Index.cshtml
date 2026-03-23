@@ -1,0 +1,430 @@
+﻿@model QLCuaHAngTienLoi.ViewModels.WarehouseViewModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<style>
+
+    .dashboard-layout {
+        display: flex;
+    }
+
+    .sidebar {
+        width: 240px;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 30px;
+        background: #f4f6fb;
+        min-height: 100vh;
+    }
+
+    /* HEADER */
+
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+        .page-header h2 {
+            font-weight: 600;
+        }
+
+    /* STATS */
+
+    .stats-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: white;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    .stat-icon {
+        font-size: 28px;
+    }
+
+    .stat-title {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: 600;
+    }
+
+    /* GRID */
+
+    .grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    /* CARD */
+
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+        margin-bottom: 15px;
+    }
+
+    /* FORM */
+
+    select, input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 10px;
+        background: #4a6cf7;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .price-preview {
+        background: #f1f5ff;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    /* TABLE */
+
+    .table-scroll {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: #4a6cf7;
+        color: white;
+    }
+
+    th, td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    /* STATUS */
+
+    .critical {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+    .warning {
+        color: #d97706;
+        font-weight: 600;
+    }
+
+    .normal {
+        color: #0284c7;
+        font-weight: 600;
+    }
+
+    /* ALERT */
+
+    .low-stock-list {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .alert-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        border-radius: 10px;
+        background: #f9fafb;
+        margin-bottom: 10px;
+        border-left: 4px solid transparent;
+    }
+
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .stock-badge.normal {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .stock-badge.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .stock-badge.critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+</style>
+
+<div class="dashboard-layout">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+        @await Html.PartialAsync("_Sidebar")
+    </aside>
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+        <!-- HEADER -->
+
+        <div class="page-header">
+            <h2><i class="fa-solid fa-warehouse"></i> Quản lý tồn kho</h2>
+            <p>Theo dõi và quản lý hàng hóa trong kho</p>
+        </div>
+
+        <!-- STATS -->
+
+        <div class="stats-row">
+
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div>
+                    <p class="stat-title">Tổng sản phẩm</p>
+                    <p class="stat-value">@Model.TotalProducts</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div>
+                    <p class="stat-title">Sắp hết hàng</p>
+                    <p class="stat-value">@Model.LowStockCount</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- GRID -->
+
+        <div class="grid-layout">
+
+            <!-- IMPORT -->
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3><i class="fa fa-truck"></i> Nhập hàng</h3>
+                </div>
+
+                <form asp-action="ImportStock" method="post">
+
+                    <label>Sản phẩm</label>
+
+                    <select name="productId" required>
+
+                        <option value="">-- Chọn sản phẩm --</option>
+
+                        @foreach (var p in Model.Products)
+                        {
+                            <option value="@p.MaSanPham">
+                                @p.TenSanPham (Tồn: @p.TonKho)
+                            </option>
+                        }
+
+                    </select>
+
+                    <label>Số lượng nhập</label>
+
+                    <input type="number" name="quantity" min="1" required />
+
+                    <label>Giá nhập</label>
+
+                    <input type="number"
+                           id="importPrice"
+                           name="importPrice"
+                           min="0"
+                           onkeyup="previewPrice()"
+                           required />
+
+                    <div class="price-preview">
+                        Giá bán dự kiến: <span id="salePreview">0 đ</span>
+                    </div>
+
+                    <label>Cập nhật giá bán?</label>
+
+                    <select name="updatePrice">
+
+                        <option value="true">
+                            Cập nhật giá bán mới (+30%)
+                        </option>
+
+                        <option value="false">
+                            Giữ giá bán cũ
+                        </option>
+
+                    </select>
+
+                    <button class="btn-primary">
+                        <i class="fa fa-download"></i> Nhập hàng
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- LOW STOCK -->
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>⚠️ Cảnh báo tồn kho</h3>
+                </div>
+
+                <div class="low-stock-list">
+
+                    @if (Model.LowStockProducts == null || !Model.LowStockProducts.Any())
+                    {
+                        <p>Không có cảnh báo</p>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.LowStockProducts)
+                        {
+
+                            var statusClass =
+                            item.TonKho < 25 ? "critical" :
+                            (item.TonKho < 40 ? "warning" : "normal");
+
+                            <div class="alert-item">
+
+                                <span>
+                                    @item.TenSanPham
+                                </span>
+
+                                <span class="stock-badge @statusClass">
+                                    @item.TonKho
+                                </span>
+
+                            </div>
+
+                        }
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PRODUCT TABLE -->
+
+        <div class="card">
+
+            <div class="card-header">
+                <h3><i class="fa fa-box"></i> Danh sách sản phẩm</h3>
+            </div>
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Tồn kho</th>
+                            <th>Giá bán</th>
+                            <th>Giá trị kho</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.Products)
+                        {
+
+                            var statusClass =
+                            item.TonKho < 25 ? "critical" :
+                            (item.TonKho < 40 ? "warning" : "normal");
+
+                            <tr>
+
+                                <td>@item.TenSanPham</td>
+
+                                <td class="@statusClass">
+                                    @item.TonKho
+                                </td>
+
+                                <td>@item.GiaBan đ</td>
+
+                                <td>@(item.GiaBan* item.TonKho) đ</td>
+
+                            </tr>
+
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+    function previewPrice(){
+
+    let importPrice =
+    document.getElementById("importPrice").value;
+
+    if(importPrice == "")
+    {
+    document.getElementById("salePreview").innerText="0 đ";
+    return;
+    }
+
+    let salePrice = importPrice * 1.3;
+
+    document.getElementById("salePreview").innerText =
+    salePrice.toLocaleString() + " đ";
+
+    }
+
+</script>
