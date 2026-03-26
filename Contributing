@@ -1,0 +1,140 @@
+🤝 Contributing to QLCuaHAngTienLoi
+
+Cảm ơn bạn đã quan tâm đến việc đóng góp cho dự án QLCuaHAngTienLoi!
+Chúng tôi rất hoan nghênh mọi đóng góp từ cộng đồng để giúp dự án ngày càng tốt hơn.
+
+📋 Mục lục
+Code of Conduct
+Cách đóng góp
+Quy trình Pull Request
+Quy tắc commit
+Quy tắc viết code
+Báo lỗi (Bug Report)
+Đề xuất tính năng (Feature Request)
+📜 Code of Conduct
+
+Hãy giữ môi trường làm việc tôn trọng, thân thiện và chuyên nghiệp.
+
+Khi tham gia dự án, bạn đồng ý:
+
+Tôn trọng ý kiến của người khác
+Góp ý mang tính xây dựng
+Không sử dụng ngôn từ xúc phạm hoặc gây tranh cãi
+🚀 Cách đóng góp
+
+Để đóng góp vào dự án, hãy làm theo các bước sau.
+
+1️⃣ Fork repository
+
+Nhấn nút Fork trên GitHub để tạo bản sao của repository.
+
+2️⃣ Clone repository
+
+Clone repository về máy của bạn:
+
+git clone https://github.com/your-username/QLCuaHAngTienLoi.git
+3️⃣ Tạo branch mới
+
+Luôn tạo branch mới khi phát triển tính năng:
+
+git checkout -b feature/ten-tinh-nang
+
+Ví dụ:
+
+git checkout -b feature/add-cart-system
+4️⃣ Thực hiện thay đổi
+
+Sau khi chỉnh sửa code, hãy commit thay đổi.
+
+git add .
+git commit -m "feat: add shopping cart feature"
+5️⃣ Push lên GitHub
+git push origin feature/ten-tinh-nang
+6️⃣ Tạo Pull Request
+
+Truy cập repository trên GitHub và tạo Pull Request để yêu cầu merge code vào branch chính.
+
+🔀 Quy trình Pull Request
+
+Một Pull Request nên:
+
+Mô tả rõ thay đổi
+Liên kết issue (nếu có)
+Chỉ tập trung vào một tính năng hoặc bug
+
+Ví dụ:
+
+Add shopping cart functionality
+
+- Add cart model
+- Add cart controller
+- Update UI
+📝 Quy tắc Commit Message
+
+Chúng tôi sử dụng Conventional Commits.
+
+Type	Mô tả
+feat	Thêm tính năng mới
+fix	Sửa lỗi
+docs	Cập nhật tài liệu
+style	Thay đổi format code
+refactor	Tái cấu trúc code
+test	Thêm hoặc sửa test
+
+Ví dụ:
+
+feat: add product management module
+fix: resolve product price display bug
+docs: update README
+💻 Quy tắc viết code
+
+Để đảm bảo chất lượng code, vui lòng tuân theo các nguyên tắc sau:
+
+1. Đặt tên rõ ràng
+SanPhamController
+GetAllProducts()
+CalculateTotalPrice()
+2. Tránh code trùng lặp
+
+Nếu logic giống nhau, hãy tách thành function hoặc service.
+
+3. Comment khi cần thiết
+
+Chỉ comment khi đoạn code khó hiểu.
+
+4. Format code
+
+Sử dụng format chuẩn của Visual Studio / C# coding convention.
+
+🐞 Báo lỗi (Bug Report)
+
+Nếu bạn phát hiện lỗi, hãy tạo Issue và cung cấp:
+
+Mô tả lỗi
+Các bước để tái hiện
+Kết quả mong đợi
+Ảnh màn hình (nếu có)
+
+Ví dụ:
+
+Bug: Product price not updating
+
+Steps to reproduce:
+1. Open product page
+2. Edit price
+3. Save
+
+Expected result:
+Price should update correctly.
+💡 Đề xuất tính năng (Feature Request)
+
+Bạn có thể đề xuất tính năng mới bằng cách tạo Issue.
+
+Ví dụ:
+
+Feature Request: Add barcode scanning for products
+🙌 Cảm ơn bạn
+
+Cảm ơn bạn đã dành thời gian đóng góp cho dự án QLCuaHAngTienLoi.
+
+Mọi đóng góp dù nhỏ đều giúp dự án phát triển tốt hơn 🚀
