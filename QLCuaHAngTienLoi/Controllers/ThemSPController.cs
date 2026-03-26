@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using QLCuaHAngTienLoi.data;
 using QLCuaHAngTienLoi.ViewModels;
 
-namespace QLCuaHAngTienLoi.Controllers
-{
     public class ThemSPController : Controller
     {
         private readonly QlcuaHangContext _context;
