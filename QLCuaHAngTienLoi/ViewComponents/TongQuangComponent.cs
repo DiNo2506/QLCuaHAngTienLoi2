@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using QLCuaHAngTienLoi.data;
 using QLCuaHAngTienLoi.ViewModels;
+using System.Linq;
 
 namespace QLCuaHAngTienLoi.ViewComponents
 {
@@ -18,13 +19,13 @@ namespace QLCuaHAngTienLoi.ViewComponents
         public IViewComponentResult Invoke()
         {
             var lowStock = _db.SanPhams
-                .Where(sp => (sp.TonKho ?? 0) < (sp.MucCanhBao ?? 10))
+                .Where(sp => (sp.TonKho ) < (sp.MucCanhBao ))
                 .OrderBy(sp => sp.TonKho)
                 .Select(sp => new LowStockItemVM
                 {
                     MaSanPham = sp.MaSanPham,
                     TenSanPham = sp.TenSanPham ?? "",
-                    TonKho = sp.TonKho ?? 0,
+                    TonKho = sp.TonKho ,
                     GiaBan = sp.GiaBan,
                     NgayThem = sp.NgayThem
                 })
@@ -32,14 +33,14 @@ namespace QLCuaHAngTienLoi.ViewComponents
 
             var recent = _db.SanPhams
                 .Include(sp => sp.MaDanhMucNavigation)
-                .OrderByDescending(sp => sp.NgayThem ?? DateTime.MinValue)
+                .OrderByDescending(sp => sp.NgayThem )
                 .Take(5)
                 .Select(sp => new ProductShortVM
                 {
                     MaSanPham = sp.MaSanPham,
                     TenSanPham = sp.TenSanPham ?? "",
                     Category = sp.MaDanhMucNavigation.TenDanhMuc,
-                    Price = sp.GiaBan ?? 0,
+                    Price = sp.GiaBan ,
                     NgayThem = sp.NgayThem
                 })
                 .ToList();
@@ -47,7 +48,7 @@ namespace QLCuaHAngTienLoi.ViewComponents
             var vm = new TongQuanVM
             {
                 TongSanPham = _db.SanPhams.Count(),
-                TongGiaTriTonKho = _db.SanPhams.Sum(sp => (sp.GiaNhap ?? 0) * (sp.TonKho ?? 0)),
+                TongGiaTriTonKho = _db.SanPhams.Sum(sp => (sp.GiaNhap ) * (sp.TonKho )),
                 SanPhamSapHet = lowStock.Count,
                 TongDanhMuc = _db.DanhMucs.Count(),
                 LowStockItems = lowStock,

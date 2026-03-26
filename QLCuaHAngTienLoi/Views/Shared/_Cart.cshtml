@@ -1,6 +1,6 @@
 ﻿<aside class="cart-sidebar">
     <div class="cart-header">
-        <h3>Giỏ hàng</h3>
+        <h3>🛒 Giỏ hàng</h3>
         <span class="cart-count" id="cart-count">0</span>
     </div>
 
@@ -19,31 +19,152 @@
             <span class="summary-total" id="cart-total">0đ</span>
         </div>
 
-        <button class="checkout-btn" id="checkout-btn" disabled>Thanh toán</button>
+        <button class="checkout-btn" id="checkout-btn" disabled>
+            Thanh toán
+        </button>
     </div>
 </aside>
 
+<style>
+    /* ===== SIDEBAR ===== */
+    .cart-sidebar {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    /* ===== HEADER ===== */
+    .cart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .cart-count {
+        background: #4f46e5;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+    }
+
+    /* ===== ITEMS ===== */
+    .cart-items {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+    }
+
+    .cart-empty {
+        text-align: center;
+        color: #94a3b8;
+        padding: 20px;
+    }
+
+    /* ===== ITEM ===== */
+    .cart-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
+
+    .cart-item-name {
+        font-weight: 600;
+    }
+
+    .cart-item-price {
+        color: #16a34a;
+        font-size: 13px;
+    }
+
+    /* ===== CONTROLS ===== */
+    .cart-item-controls {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+    }
+
+    .qty-btn {
+        padding: 3px 8px;
+        border: none;
+        background: #6366f1;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .remove-btn {
+        padding: 3px 8px;
+        border: none;
+        background: #ef4444;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    /* ===== INPUT ===== */
+    .cart-qty-input {
+        width: 45px;
+        text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+
+    /* ===== SUMMARY ===== */
+    .cart-summary {
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .summary-total {
+        color: #16a34a;
+        font-weight: bold;
+    }
+
+    /* ===== BUTTON ===== */
+    .checkout-btn {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg,#22c55e,#16a34a);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .checkout-btn:disabled {
+            background: #cbd5f5;
+            cursor: not-allowed;
+        }
+</style>
 
 <script>
     (function(){
 
         const CHECKOUT_PATH = '/HoaDon/Checkout';
 
-        function loadCart(){
-            try{
-                return JSON.parse(localStorage.getItem('cart') || '[]');
-            }catch{
-                return [];
-            }
-        }
+        // ===== GLOBAL FUNCTIONS (để Products gọi được) =====
+        window.__cartLoad = function(){
+            try { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+            catch { return []; }
+        };
 
-        function saveCart(cart){
+        window.__cartSave = function(cart){
             localStorage.setItem('cart', JSON.stringify(cart));
-        }
+        };
 
-        function renderCart(){
+        window.__cartRender = function(){
 
-            const cart = loadCart();
+            const cart = __cartLoad();
 
             const container = document.getElementById('cart-items');
             const count = document.getElementById('cart-count');
@@ -52,42 +173,33 @@
             const checkoutBtn = document.getElementById('checkout-btn');
 
             if(!cart.length){
-
                 container.innerHTML = '<div class="cart-empty">Giỏ hàng trống</div>';
-
                 count.textContent = '0';
                 qty.textContent = '0';
                 total.textContent = '0đ';
-
                 checkoutBtn.disabled = true;
-
                 return;
             }
 
-            count.textContent = cart.length;
-
             const totalQty = cart.reduce((s,i)=> s + i.qty,0);
-            const totalPrice = cart.reduce((s,i)=> s + i.price * i.qty,0);
+            const totalPrice = cart.reduce((s,i)=> s + i.price*i.qty,0);
 
+            count.textContent = totalQty;
             qty.textContent = totalQty;
-            total.textContent = new Intl.NumberFormat('vi-VN').format(totalPrice) + 'đ';
+            total.textContent = new Intl.NumberFormat('vi-VN').format(totalPrice)+'đ';
 
             checkoutBtn.disabled = false;
 
             container.innerHTML = cart.map(item=>{
 
-                const price = new Intl.NumberFormat('vi-VN').format(item.price) + 'đ';
+                const price = new Intl.NumberFormat('vi-VN').format(item.price)+'đ';
 
                 return `
                 <div class="cart-item" data-id="${item.id}">
-
-                    <div class="cart-item-info">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">${price}</div>
-                    </div>
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-price">${price}</div>
 
                     <div class="cart-item-controls">
-
                         <button class="qty-btn" data-action="dec">−</button>
 
                         <input type="number"
@@ -98,85 +210,65 @@
 
                         <button class="qty-btn" data-action="inc">+</button>
 
-                        <button class="remove-btn" data-action="remove">Xóa</button>
-
+                        <button class="remove-btn" data-action="remove">X</button>
                     </div>
-
                 </div>
                 `;
-
             }).join('');
+        };
 
-        }
-
-
+        // ===== CLICK =====
         document.addEventListener('click',function(e){
 
-            const el = e.target;
-            const itemEl = el.closest('.cart-item');
-
+            const itemEl = e.target.closest('.cart-item');
             if(!itemEl) return;
 
             const id = itemEl.dataset.id;
-            const action = el.dataset.action;
+            const action = e.target.dataset.action;
 
             if(!action) return;
 
-            let cart = loadCart();
+            let cart = __cartLoad();
             const idx = cart.findIndex(x=>String(x.id)===String(id));
 
             if(idx === -1) return;
 
-            if(action === 'inc'){
-
-                cart[idx].qty++;
-
-            }
+            if(action === 'inc') cart[idx].qty++;
             else if(action === 'dec'){
-
                 cart[idx].qty--;
-
-                if(cart[idx].qty <= 0)
-                    cart.splice(idx,1);
+                if(cart[idx].qty <= 0) cart.splice(idx,1);
             }
             else if(action === 'remove'){
-
                 cart.splice(idx,1);
             }
 
-            saveCart(cart);
-            renderCart();
-
+            __cartSave(cart);
+            __cartRender();
         });
 
-
+        // ===== INPUT =====
         document.addEventListener('change',function(e){
 
-            if(!e.target.classList.contains('cart-qty-input'))
-                return;
+            if(!e.target.classList.contains('cart-qty-input')) return;
 
             const id = e.target.dataset.id;
-            let value = parseInt(e.target.value);
+            let val = parseInt(e.target.value);
 
-            if(isNaN(value) || value < 1)
-                value = 1;
+            if(isNaN(val) || val < 1) val = 1;
 
-            let cart = loadCart();
-            const item = cart.find(x=>String(x.id)===String(id));
+            let cart = __cartLoad();
+            let item = cart.find(x=>String(x.id)===String(id));
 
-            if(item){
-                item.qty = value;
-            }
+            if(item) item.qty = val;
 
-            saveCart(cart);
-            renderCart();
-
+            __cartSave(cart);
+            __cartRender();
         });
 
-
+        // ===== CHECKOUT =====
         document.getElementById('checkout-btn')?.addEventListener('click',function(){
 
-            const cart = loadCart();
+            const cart = __cartLoad();
 
             if(!cart.length){
                 alert('Giỏ hàng trống!');
@@ -184,24 +276,8 @@
             }
 
             window.location.href = CHECKOUT_PATH;
-
         });
 
-
-        document.addEventListener('DOMContentLoaded',renderCart);
-        renderCart();
-
+        document.addEventListener('DOMContentLoaded',__cartRender);
     })();
 </script>
-
-
-<style>
-
-    .cart-qty-input {
-        width: 50px;
-        text-align: center;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 3px;
-    }
-</style>

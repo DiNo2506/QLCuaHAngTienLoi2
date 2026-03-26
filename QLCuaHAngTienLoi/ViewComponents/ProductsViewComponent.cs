@@ -49,8 +49,8 @@ namespace QLCuaHAngTienLoi.ViewComponents
                     Sku = p.Sku ?? string.Empty,
                     Category = p.MaDanhMucNavigation?.TenDanhMuc ?? string.Empty,
                     Company = p.MaNccNavigation?.TenCongTy ?? string.Empty,
-                    Price = p.GiaBan ?? 0m,
-                    Stock = p.TonKho ?? 0,
+                    Price = p.GiaBan  ,
+                    Stock = p.TonKho  ,
                     NgayThem = p.NgayThem
                 }).ToList(),
                 Page = Math.Max(page, 1),

@@ -3,107 +3,71 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using QLCuaHAngTienLoi.data;
 using QLCuaHAngTienLoi.ViewModels;
 
-    public class ThemSPController : Controller
+public class ThemSPController : Controller
+{
+    private readonly QlcuaHangContext _context;
+
+    public ThemSPController(QlcuaHangContext context)
     {
-        private readonly QlcuaHangContext _context;
+        _context = context;
+    }
 
-        public ThemSPController(QlcuaHangContext context)
-        {
-            _context = context;
-        }
-
-        // ======================
-        // GET: Form thêm sản phẩm
-        // ======================
-        public IActionResult Index()
-        {
-            var vm = new ThemSPVM
+    private void LoadDropdown(ThemSPVM vm)
+    {
+        vm.DanhMucList = _context.DanhMucs
+            .Select(x => new SelectListItem
             {
-                SanPham = new SanPham(),
+                Value = x.MaDanhMuc,
+                Text = x.TenDanhMuc
+            }).ToList();
 
-                DanhMucList = _context.DanhMucs
-                    .Select(d => new SelectListItem
-                    {
-                        Value = d.MaDanhMuc,
-                        Text = d.TenDanhMuc
-                    }).ToList(),
+        vm.NCCList = _context.NhaCungCaps
+            .Select(x => new SelectListItem
+            {
+                Value = x.MaNcc,
+                Text = x.TenCongTy
+            }).ToList();
+    }
 
-                NCCList = _context.NhaCungCaps
-                    .Select(n => new SelectListItem
-                    {
-                        Value = n.MaNcc,
-                        Text = n.TenCongTy
-                    }).ToList()
-            };
+    // GET
+    public IActionResult Index()
+    {
+        var vm = new ThemSPVM();
+        LoadDropdown(vm);
+        return View(vm);
+    }
 
+    // POST
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Index(ThemSPVM vm)
+    {
+        if (!ModelState.IsValid)
+        {
+            LoadDropdown(vm);
             return View(vm);
         }
 
-        // ======================
-        // POST: Lưu sản phẩm
-        // ======================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Index(ThemSPVM vm)
+        try
         {
-            if (ModelState.IsValid)
-            {
-                // ===== Tạo mã sản phẩm =====
-                var lastProduct = _context.SanPhams
-                    .OrderByDescending(p => p.MaSanPham)
-                    .FirstOrDefault();
+            int count = _context.SanPhams.Count() + 1;
 
-                int nextNumber = 1;
+            vm.SanPham.MaSanPham = $"SP{count:D3}";
+            vm.SanPham.Sku = $"SKU{count:D4}";
+            vm.SanPham.GiaBan = vm.SanPham.GiaNhap * 1.3m;
+            vm.SanPham.NgayThem = DateTime.Now;
 
-                if (lastProduct != null)
-                {
-                    string lastCode = lastProduct.MaSanPham.Substring(2);
-                    nextNumber = int.Parse(lastCode) + 1;
-                }
+            _context.SanPhams.Add(vm.SanPham);
+            _context.SaveChanges();
 
-                vm.SanPham.MaSanPham = "SP" + nextNumber.ToString("D3");
+            TempData["success"] = "✅ Thêm sản phẩm thành công!";
 
-
-                // ===== Tạo SKU =====
-                var lastSKU = _context.SanPhams
-                    .OrderByDescending(p => p.Sku)
-                    .FirstOrDefault();
-
-                int nextSKU = 1;
-
-                if (lastSKU != null)
-                {
-                    string last = lastSKU.Sku.Substring(3);
-                    nextSKU = int.Parse(last) + 1;
-                }
-
-                vm.SanPham.Sku = "SKU" + nextSKU.ToString("D4");
-
-
-                // ===== Ngày thêm =====
-                vm.SanPham.NgayThem = DateTime.Now;
-
-                _context.SanPhams.Add(vm.SanPham);
-                _context.SaveChanges();
-
-                // quay về dashboard
-                return RedirectToAction("Index", "Home");
-            }
-
-            vm.DanhMucList = _context.DanhMucs
-                .Select(d => new SelectListItem
-                {
-                    Value = d.MaDanhMuc,
-                    Text = d.TenDanhMuc
-                }).ToList();
-
-            vm.NCCList = _context.NhaCungCaps
-                .Select(n => new SelectListItem
-                {
-                    Value = n.MaNcc,
-                    Text = n.TenCongTy
-                }).ToList();
-
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            LoadDropdown(vm);
             return View(vm);
         }
     }

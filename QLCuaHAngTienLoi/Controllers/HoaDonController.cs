@@ -61,7 +61,7 @@ namespace QLCuaHAngTienLoi.Controllers
                     if (sp.TonKho < item.Qty)
                         throw new Exception($"Sản phẩm '{sp.TenSanPham}' không đủ hàng");
 
-                    var donGia = sp.GiaBan ?? 0;
+                    var donGia = sp.GiaBan  ;
                     var thanhTien = donGia * item.Qty;
 
                     // 🔥 TRỪ TỒN KHO
