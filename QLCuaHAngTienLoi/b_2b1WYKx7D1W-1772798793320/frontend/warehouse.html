@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tồn Kho - Cửa Hàng 24h</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="store-header">
+                <div class="store-icon">🏪</div>
+                <h1>Cửa Hàng 24h</h1>
+                <p>123 Đường ABC</p>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="icon">📊</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a href="products.html" class="menu-item">
+                    <span class="icon">📦</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a href="warehouse.html" class="menu-item active">
+                    <span class="icon">📋</span>
+                    <span>Tồn kho</span>
+                </a>
+                <a href="reports.html" class="menu-item">
+                    <span class="icon">📈</span>
+                    <span>Báo cáo</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Quản lý tồn kho</h2>
+                <p>Theo dõi sản phẩm trong kho</p>
+            </div>
+
+            <div class="warehouse-stats">
+                <div class="stat-card">
+                    <span class="stat-label">Tổng sản phẩm</span>
+                    <span class="stat-number" id="total-products-warehouse">0</span>
+                </div>
+                <div class="stat-card alert">
+                    <span class="stat-label">Cảnh báo tồn kho</span>
+                    <span class="stat-number" id="low-stock-count">0</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Sản phẩm sắp hết hàng (&lt; 10 cái)</h3>
+                <table class="warehouse-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Tồn kho</th>
+                            <th>Mức cảnh báo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="low-stock-tbody">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>Toàn bộ sản phẩm</h3>
+                <table class="warehouse-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Tồn kho hiện tại</th>
+                            <th>Giá bán</th>
+                            <th>Giá trị</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-products-tbody">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        async function loadWarehouse() {
+            try {
+                const prodRes = await fetch('/api/products');
+                const products = await prodRes.json();
+
+                const warehouseRes = await fetch('/api/warehouse');
+                const warehouse = await warehouseRes.json();
+
+                // Update stats
+                document.getElementById('total-products-warehouse').textContent = warehouse.total_products;
+                document.getElementById('low-stock-count').textContent = warehouse.low_stock_alerts;
+
+                // Low stock items
+                const lowStock = products.filter(p => p.stock < 10);
+                const lowStockTbody = document.getElementById('low-stock-tbody');
+
+                if (lowStock.length === 0) {
+                    lowStockTbody.innerHTML = '<tr><td colspan="3" class="empty">Không có sản phẩm sắp hết hàng</td></tr>';
+                } else {
+                    lowStock.forEach(p => {
+                        const row = document.createElement('tr');
+                        const statusClass = p.stock < 5 ? 'critical' : 'warning';
+                        row.innerHTML = `
+                            <td>${p.name}</td>
+                            <td><span class="stock-badge ${statusClass}">${p.stock}</span></td>
+                            <td>Cần nhập thêm hàng</td>
+                        `;
+                        lowStockTbody.appendChild(row);
+                    });
+                }
+
+                // All products
+                const allProductsTbody = document.getElementById('all-products-tbody');
+                products.forEach(p => {
+                    const row = document.createElement('tr');
+                    const value = p.stock * p.price;
+                    row.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.stock}</td>
+                        <td>${p.price.toLocaleString('vi-VN')}đ</td>
+                        <td>${value.toLocaleString('vi-VN')}đ</td>
+                    `;
+                    allProductsTbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading warehouse:', error);
+            }
+        }
+
+        loadWarehouse();
+    </script>
+</body>
+</html>

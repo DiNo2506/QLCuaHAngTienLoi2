@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm - Cửa Hàng 24h</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="store-header">
+                <div class="store-icon">🏪</div>
+                <h1>Cửa Hàng 24h</h1>
+                <p>123 Đường ABC</p>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="index.html" class="menu-item">
+                    <span class="icon">📊</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a href="products.html" class="menu-item active">
+                    <span class="icon">📦</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a href="warehouse.html" class="menu-item">
+                    <span class="icon">📋</span>
+                    <span>Tồn kho</span>
+                </a>
+                <a href="reports.html" class="menu-item">
+                    <span class="icon">📈</span>
+                    <span>Báo cáo</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <div>
+                    <h2>Quản lý sản phẩm</h2>
+                    <p>Thêm, sửa, xóa sản phẩm trong cửa hàng</p>
+                </div>
+                <button class="btn-primary" onclick="showAddForm()">+ Thêm sản phẩm</button>
+            </div>
+
+            <div class="search-section">
+                <input type="text" id="search-input" placeholder="Tìm kiếm sản phẩm..." class="search-input">
+                <select id="sort-select" class="sort-select">
+                    <option value="all">Tất cả danh mục</option>
+                    <option value="price_asc">Giá tăng dần</option>
+                    <option value="price_desc">Giá giảm dần</option>
+                    <option value="stock_asc">Tồn kho ít</option>
+                    <option value="stock_desc">Tồn kho nhiều</option>
+                </select>
+            </div>
+
+            <div class="modal" id="addProductModal">
+                <div class="modal-content">
+                    <span class="modal-close" onclick="closeAddForm()">&times;</span>
+                    <h3>Thêm sản phẩm mới</h3>
+                    <form id="productForm" onsubmit="handleAddProduct(event)">
+                        <input type="text" id="productName" placeholder="Tên sản phẩm" required>
+                        <input type="text" id="productCompany" placeholder="Tên công ty" required>
+                        <input type="text" id="productSku" placeholder="Mã SKU" required>
+                        <input type="text" id="productCategory" placeholder="Danh mục" required>
+                        <input type="number" id="productPrice" placeholder="Giá bán" required>
+                        <input type="number" id="productStock" placeholder="Tồn kho" required>
+                        <button type="submit" class="btn-primary">Thêm sản phẩm</button>
+                    </form>
+                </div>
+            </div>
+
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>SẢN PHẨM</th>
+                        <th>MÃ SKU</th>
+                        <th>DANH MỤC</th>
+                        <th>GIÁ BÁN</th>
+                        <th>TỒN KHO</th>
+                        <th>THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        let allProducts = [];
+
+        async function loadProducts(search = '', sort = 'all') {
+            try {
+                let url = '/api/products';
+                const params = [];
+                if (search) params.push(`search=${encodeURIComponent(search)}`);
+                if (sort !== 'all') params.push(`sort=${sort}`);
+                if (params.length) url += '?' + params.join('&');
+
+                const res = await fetch(url);
+                allProducts = await res.json();
+                renderProducts();
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('products-tbody');
+            tbody.innerHTML = '';
+
+            allProducts.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="product-cell">
+                            <div class="product-avatar">${p.name[0].toUpperCase()}</div>
+                            <div>
+                                <p>${p.name}</p>
+                                <p class="company">${p.company}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${p.sku}</td>
+                    <td>${p.category}</td>
+                    <td>${p.price.toLocaleString('vi-VN')}đ</td>
+                    <td><span class="stock-badge">${p.stock}</span></td>
+                    <td>
+                        <button class="btn-action" onclick="editProduct(${p.id})">✏️</button>
+                        <button class="btn-action delete" onclick="deleteProduct(${p.id})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function handleAddProduct(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('productName').value,
+                company: document.getElementById('productCompany').value,
+                sku: document.getElementById('productSku').value,
+                category: document.getElementById('productCategory').value,
+                price: document.getElementById('productPrice').value,
+                stock: document.getElementById('productStock').value
+            };
+
+            try {
+                const res = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeAddForm();
+                    document.getElementById('productForm').reset();
+                    loadProducts();
+                    alert('Thêm sản phẩm thành công!');
+                }
+            } catch (error) {
+                console.error('Error adding product:', error);
+                alert('Lỗi khi thêm sản phẩm');
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) return;
+
+            try {
+                const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadProducts();
+                    alert('Xóa sản phẩm thành công!');
+                }
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                alert('Lỗi khi xóa sản phẩm');
+            }
+        }
+
+        function editProduct(id) {
+            alert('Chức năng chỉnh sửa sẽ được cập nhật trong phiên bản tới');
+        }
+
+        function showAddForm() {
+            document.getElementById('addProductModal').style.display = 'flex';
+        }
+
+        function closeAddForm() {
+            document.getElementById('addProductModal').style.display = 'none';
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const sort = document.getElementById('sort-select').value;
+            loadProducts(e.target.value, sort);
+        });
+
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            const search = document.getElementById('search-input').value;
+            loadProducts(search, e.target.value);
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addProductModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
