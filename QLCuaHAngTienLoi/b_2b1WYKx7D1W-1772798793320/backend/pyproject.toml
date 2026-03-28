@@ -1,0 +1,9 @@
+[project]
+name = "store-backend"
+version = "0.1.0"
+description = "Store management system backend"
+
+dependencies = [
+    "flask==3.0.0",
+    "flask-cors==4.0.0",
+]

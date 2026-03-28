@@ -1,0 +1,10 @@
+{
+  "name": "store-frontend",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "python -m http.server 3000 --directory ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
